@@ -10,12 +10,16 @@ import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.widget.TextView;
 
+import com.android.volley.AuthFailureError;
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
 import com.twitteragent.com.twitteragent.Volley.Singleton;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class MainActivity extends AppCompatActivity {
     public static final int requestInternetPermissions = 100;
@@ -31,21 +35,29 @@ public class MainActivity extends AppCompatActivity {
             if ((ActivityCompat.checkSelfPermission(this, Manifest.permission.INTERNET) != PackageManager.PERMISSION_GRANTED))
                 ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.INTERNET}, requestInternetPermissions);
 
-        if(ActivityCompat.checkSelfPermission(this, Manifest.permission.INTERNET) == PackageManager.PERMISSION_GRANTED){;
+        if(ActivityCompat.checkSelfPermission(this, Manifest.permission.INTERNET) == PackageManager.PERMISSION_GRANTED){
             final TextView mTextView = (TextView) findViewById(R.id.text);
-            String url = "http://www.google.com";
+            String url = "https://api.twitter.com/oauth/request_token";
             StringRequest stringRequest = new StringRequest(Request.Method.GET, url,
                     new Response.Listener<String>() {
                         @Override
                         public void onResponse(String response) {
-                            mTextView.setText("Response is: " + response.substring(0, 500));
+                            mTextView.setText("Response is: " + response);
                         }
                     }, new Response.ErrorListener() {
                 @Override
                 public void onErrorResponse(VolleyError error) {
                     mTextView.setText("That didn't work!");
                 }
-            });
+            }){
+                @Override
+                public Map<String, String> getHeaders() throws AuthFailureError {
+                    Map<String, String>  params = new HashMap<String, String>();
+                    params.put("Content-Type", "application/x-www-form-urlencoded");
+                    params.put("Authorization", "OAuth oauth_consumer_key=\"fLYk3sCLZUbcSalUvSTio5MjF\",oauth_signature_method=\"HMAC-SHA1\",oauth_timestamp=\"1497883540\",oauth_nonce=\"AupQPk\",oauth_version=\"1.0\",oauth_signature=\"aKIGOTg4%2Bxw7UoKXNf7FjBBKr5A%3D\"");
+                    return params;
+                }
+            };
             queue.add(stringRequest);
         }
     }
