@@ -15,24 +15,24 @@ import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
-import com.android.volley.toolbox.Volley;
+import com.twitteragent.com.twitteragent.Volley.Singleton;
 
 public class MainActivity extends AppCompatActivity {
     public static final int requestInternetPermissions = 100;
     public final static String TAG = MainActivity.class.getSimpleName();
-
+    private RequestQueue queue;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        queue = Singleton.getInstance(this).getRequestQueue();
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
             if ((ActivityCompat.checkSelfPermission(this, Manifest.permission.INTERNET) != PackageManager.PERMISSION_GRANTED))
                 ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.INTERNET}, requestInternetPermissions);
 
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.INTERNET) == PackageManager.PERMISSION_GRANTED) {
+        if(ActivityCompat.checkSelfPermission(this, Manifest.permission.INTERNET) == PackageManager.PERMISSION_GRANTED){;
             final TextView mTextView = (TextView) findViewById(R.id.text);
-            RequestQueue queue = Volley.newRequestQueue(this);
             String url = "http://www.google.com";
             StringRequest stringRequest = new StringRequest(Request.Method.GET, url,
                     new Response.Listener<String>() {
