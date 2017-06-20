@@ -7,6 +7,7 @@ import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Base64;
 import android.util.Log;
 import android.widget.TextView;
 
@@ -18,18 +19,66 @@ import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
 import com.twitteragent.com.twitteragent.Volley.Singleton;
 
+import java.io.UnsupportedEncodingException;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
+import java.security.NoSuchProviderException;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+
+import javax.crypto.Mac;
+import javax.crypto.spec.SecretKeySpec;
+
 
 public class MainActivity extends AppCompatActivity {
     public static final int requestInternetPermissions = 100;
     public final static String TAG = MainActivity.class.getSimpleName();
     private RequestQueue queue;
+    private String url = "https://api.twitter.com/oauth/request_token";
+    private String secret = "Qu17wtaFirzvnCHT1YpwWbNzJcS6XpcrbZiTkdStE3j6VSNT8n";
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         queue = Singleton.getInstance(this).getRequestQueue();
+
+        Date date = new Date();
+        Long timestamp = new Long(date.getTime()/1000);
+        final String oauth_timestamp = timestamp.toString();
+        Log.d(TAG," timestamp " + oauth_timestamp);
+
+
+        byte[] nonceByte = oauth_timestamp.getBytes();
+        //final String oauth_nonce =  Base64.encodeToString(nonceByte,Base64.DEFAULT);
+        final String oauth_nonce =  "fPJSG4";
+        Log.d(TAG," oauth_nonce " + oauth_nonce);
+
+
+        StringBuilder base = new StringBuilder();
+        base.append("GET&");
+        base.append(url);
+        System.out.println(" base  " + base);
+        Mac mac = null;
+        try {
+            mac = Mac.getInstance("HmacSHA1");
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        }
+        SecretKeySpec sec = new SecretKeySpec(secret.getBytes(), mac.getAlgorithm());
+        try {
+            mac.init(sec);
+        } catch (InvalidKeyException e) {
+            e.printStackTrace();
+        }
+        byte[] digest = mac.doFinal(base.toString().getBytes());
+        byte[] result=Base64.encode(digest, Base64.DEFAULT);
+        final String oauth_signature =  Base64.encodeToString(nonceByte,Base64.DEFAULT);
+        Log.d(TAG,"result oauth_nonce " +oauth_signature);
+
+
+
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
             if ((ActivityCompat.checkSelfPermission(this, Manifest.permission.INTERNET) != PackageManager.PERMISSION_GRANTED))
@@ -37,7 +86,7 @@ public class MainActivity extends AppCompatActivity {
 
         if(ActivityCompat.checkSelfPermission(this, Manifest.permission.INTERNET) == PackageManager.PERMISSION_GRANTED){
             final TextView mTextView = (TextView) findViewById(R.id.text);
-            String url = "https://api.twitter.com/oauth/request_token";
+            url = "https://api.twitter.com/oauth/request_token";
             StringRequest stringRequest = new StringRequest(Request.Method.GET, url,
                     new Response.Listener<String>() {
                         @Override
@@ -54,13 +103,15 @@ public class MainActivity extends AppCompatActivity {
                 public Map<String, String> getHeaders() throws AuthFailureError {
                     Map<String, String>  params = new HashMap<String, String>();
                     params.put("Content-Type", "application/x-www-form-urlencoded");
-                    params.put("Authorization", "OAuth oauth_consumer_key=\"fLYk3sCLZUbcSalUvSTio5MjF\",oauth_signature_method=\"HMAC-SHA1\",oauth_timestamp=\"1497883540\",oauth_nonce=\"AupQPk\",oauth_version=\"1.0\",oauth_signature=\"aKIGOTg4%2Bxw7UoKXNf7FjBBKr5A%3D\"");
+                    params.put("Authorization", "OAuth oauth_consumer_key=\"fLYk3sCLZUbcSalUvSTio5MjF\",oauth_signature_method=\"HMAC-SHA1\",oauth_timestamp=\""+oauth_timestamp+"\",oauth_nonce=\""+oauth_nonce+"\",oauth_version=\"1.0\",oauth_signature=\""+oauth_signature+"\"");
                     return params;
                 }
             };
             queue.add(stringRequest);
         }
     }
+
+
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
@@ -73,5 +124,11 @@ public class MainActivity extends AppCompatActivity {
             }
     }
 
+    private static String generateNonce() throws NoSuchAlgorithmException, NoSuchProviderException, UnsupportedEncodingException
+    {
+        String dateTimeString = Long.toString(new Date().getTime());
+        byte[] nonceByte = dateTimeString.getBytes();
+        return Base64.encodeToString(nonceByte,Base64.DEFAULT);
+    }
 
 }
