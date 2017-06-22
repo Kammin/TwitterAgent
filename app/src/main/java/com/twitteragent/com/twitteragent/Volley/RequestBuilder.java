@@ -11,6 +11,7 @@ import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
+import com.twitteragent.com.twitteragent.Util.Str;
 import com.twitteragent.com.twitteragent.Util.URLs;
 
 import java.io.UnsupportedEncodingException;
@@ -30,6 +31,8 @@ public class RequestBuilder {
     public final static String TAG = RequestBuilder.class.getSimpleName();
 
     public static void get_request_token(Context context){
+
+        String signature = "";
         Date date = new Date();
         Long timestamp = new Long(date.getTime()/1000);
         final String oauth_timestamp = timestamp.toString();
@@ -57,19 +60,20 @@ public class RequestBuilder {
             e.printStackTrace();
         }
         byte[] digest = mac.doFinal(base.toString().getBytes());
-        byte[] result= Base64.encode(digest, Base64.DEFAULT);
-        final String signature =  Base64.encodeToString(nonceByte,Base64.DEFAULT);
+        byte[] result=Base64.encode(digest, Base64.DEFAULT);
+        final String oauth_signature =  Base64.encodeToString(nonceByte,Base64.DEFAULT);
+        Log.d(TAG,"result oauth_nonce " +oauth_signature);
 
         StringBuilder params = new StringBuilder();
-        params.append("oauth_consumer_key=fLYk3sCLZUbcSalUvSTio5MjF&");
+        params.append("oauth_consumer_key="+URLs.consumerKey+"&");
         params.append("oauth_nonce="+oauth_nonce+"&");
         params.append("oauth_signature_method=HMAC-SHA1&");
         params.append("oauth_timestamp="+oauth_timestamp+"&");
         params.append("oauth_version=1.0");
 
+
         try {
-            String request_token = getSignature(URLEncoder.encode(URLs.URL_request_token, ENC), URLEncoder.encode(params.toString(), ENC));
-            Log.d(TAG,"result oauth_nonce " +request_token);
+            signature = getSignature(URLEncoder.encode(URLs.URL_request_token, ENC), URLEncoder.encode(params.toString(), ENC));
         } catch (UnsupportedEncodingException e) {
             e.printStackTrace();
         } catch (NoSuchAlgorithmException e) {
@@ -77,12 +81,17 @@ public class RequestBuilder {
         } catch (InvalidKeyException e) {
             e.printStackTrace();
         }
+        Log.d(TAG,"result signature " +signature);
+
+        final String authorization = "OAuth oauth_consumer_key=\""+URLs.consumerKey+"\",oauth_signature_method=\"HMAC-SHA1\",oauth_timestamp=\""+oauth_timestamp+"\",oauth_nonce=\""+oauth_nonce+"\",oauth_version=\"1.0\",oauth_signature=\""+signature+"\"";
 
         StringRequest stringRequest = new StringRequest(Request.Method.GET, URLs.URL_request_token,
                 new Response.Listener<String>() {
                     @Override
                     public void onResponse(String response) {
                         Log.d(TAG,"Response "+response);
+                        Log.d(TAG,"Response "+ Str.stringBetween(response,"oauth_token=","&oauth_token_secret="));
+
                     }
                 }, new Response.ErrorListener() {
             @Override
@@ -94,7 +103,8 @@ public class RequestBuilder {
             public Map<String, String> getHeaders() throws AuthFailureError {
                 Map<String, String>  params = new HashMap<String, String>();
                 params.put("Content-Type", "application/x-www-form-urlencoded");
-                params.put("Authorization", "OAuth oauth_consumer_key=\""+URLs.consumerKey+"\",oauth_signature_method=\"HMAC-SHA1\",oauth_timestamp=\""+oauth_timestamp+"\",oauth_nonce=\""+oauth_nonce+"\",oauth_version=\"1.0\",oauth_signature=\""+signature+"\"");
+                params.put("Authorization", authorization);
+                params.put("oauth_callback", "oob");
                 return params;
             }
         };

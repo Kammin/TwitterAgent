@@ -15,6 +15,7 @@ import com.android.volley.RequestQueue;
 import com.twitteragent.com.twitteragent.Volley.RequestBuilder;
 
 import java.io.UnsupportedEncodingException;
+import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
 import java.util.Date;
@@ -36,7 +37,8 @@ public class MainActivity extends AppCompatActivity {
                 ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.INTERNET}, requestInternetPermissions);
 
         if(ActivityCompat.checkSelfPermission(this, Manifest.permission.INTERNET) == PackageManager.PERMISSION_GRANTED){
-            RequestBuilder.get_request_token(this);
+
+                RequestBuilder.get_request_token(this);
 
         }
     }
