@@ -38,9 +38,11 @@ public class RequestBuilder {
         Long timestamp = new Long(date.getTime()/1000);
         final String oauth_timestamp = timestamp.toString();
 
+
         byte[] nonceByte = oauth_timestamp.getBytes();
         int nonce =  ((int) (Math.random() * 100000000));
         final String oauth_nonce = String.valueOf(nonce);
+
 
         StringBuilder base = new StringBuilder();
         base.append("GET&");
@@ -85,14 +87,16 @@ public class RequestBuilder {
         Log.d(TAG,"result signature " +signature);
 
         final String authorization = "OAuth oauth_consumer_key=\""+URLs.consumerKey+"\",oauth_signature_method=\"HMAC-SHA1\",oauth_timestamp=\""+oauth_timestamp+"\",oauth_nonce=\""+oauth_nonce+"\",oauth_version=\"1.0\",oauth_signature=\""+signature+"\"";
+        Log.d(TAG,"authorization "+authorization);
 
         StringRequest request_token = new StringRequest(Request.Method.GET, URL_request_token,
                 new Response.Listener<String>() {
                     @Override
                     public void onResponse(String response) {
-                        String params = "?oauth_token="+Str.stringBetween(response.toString(),"oauth_token=","&oauth_token_secret=");
-                        Log.d(TAG,"Response oauth_token    "+ params);
-                        authenticity_token(context,params);
+                        String oauth_token = Str.stringBetween(response.toString(),"oauth_token=","&oauth_token_secret=");
+                        Log.d(TAG,"Response oauth_token    "+ oauth_token);
+                        //authenticity_token(context,oauth_token);
+                        authenticate(context,oauth_token);
                     }
                 }, new Response.ErrorListener() {
             @Override
@@ -113,17 +117,17 @@ public class RequestBuilder {
     }
 
 
-    public static void authenticity_token(Context context, String params){
-        Log.d(TAG,"Response authenticity_token "+ URLs.URL_authorize+params);
-        StringRequest authenticity_token = new StringRequest(Request.Method.GET,URLs.URL_authorize+params,
+    public static void authenticity_token(final Context context, String oauth_token){
+        final String oauth_tok = oauth_token;
+        StringRequest authenticity_token = new StringRequest(Request.Method.GET,URLs.URL_authorize+"?oauth_token="+oauth_token,
         //StringRequest authenticity_token = new StringRequest(Request.Method.GET,"https://api.twitter.com/oauth/authorize?oauth_token=LpNmHQAAAAAA1GhwAAABXM_sgrQ",
                 new Response.Listener<String>() {
                     @Override
                     public void onResponse(String response) {
                         //Log.d(TAG,"Response authenticity_token "+ response);
-
                         String authenticity_token = Str.stringBetween(response,"name=\"authenticity_token\" type=\"hidden\" value=\"","\">");
-                        Log.d(TAG,"Response authenticity_token "+ authenticity_token);
+                        Log.d(TAG,"Response authenticity_token"+ authenticity_token);
+                        get_pin_code(context,oauth_tok,authenticity_token);
                     }
                 }, new Response.ErrorListener() {
             @Override
@@ -143,9 +147,82 @@ public class RequestBuilder {
         Singleton.getInstance(context.getApplicationContext()).addToRequestQueue(authenticity_token);
     }
 
+    public static void authenticate(final Context context, String oauth_token){
+        final String oauth_tok = oauth_token;
+        StringRequest authenticate = new StringRequest(Request.Method.GET,URLs.URL_authenticate+"?oauth_token="+oauth_token+"&session[username_or_email]=ibayka@gmail.com"+"&session[password]=Baylkal1234",
+                //StringRequest authenticity_token = new StringRequest(Request.Method.GET,"https://api.twitter.com/oauth/authorize?oauth_token=LpNmHQAAAAAA1GhwAAABXM_sgrQ",
+                new Response.Listener<String>() {
+                    @Override
+                    public void onResponse(String response) {
+                        //Log.d(TAG,"Response authenticity_token "+ response);
+                        //String authenticity_token = Str.stringBetween(response,"name=\"authenticity_token\" type=\"hidden\" value=\"","\">");
+                        Log.d(TAG,"Response authenticate"+ response);
+                        //get_pin_code(context,oauth_tok,authenticity_token);
+                    }
+                }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                Log.d(TAG,"Response That didn't work!");
+            }
+        }){
+            @Override
+            public Map<String, String> getHeaders() throws AuthFailureError {
+                Map<String, String>  params = new HashMap<String, String>();
+                params.put("Content-Type", "application/x-www-form-urlencoded");
+                params.put("user-agent", "Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.2; .NET CLR 1.0.3705;)");
+                params.put("Accept-Language", "ru");
+                return params;
+            }
+        };
+        Singleton.getInstance(context.getApplicationContext()).addToRequestQueue(authenticate);
+    }
 
 
 
+
+
+    public static void get_pin_code(Context context, String oauth_token, String authenticity_token){
+        final String this_oauth_token = oauth_token;
+        final String this_authenticity_token = authenticity_token;
+
+        StringRequest get_pin_code = new StringRequest(Request.Method.POST,URLs.URL_authorize,
+                //StringRequest authenticity_token = new StringRequest(Request.Method.GET,"https://api.twitter.com/oauth/authorize?oauth_token=LpNmHQAAAAAA1GhwAAABXM_sgrQ",
+                new Response.Listener<String>() {
+                    @Override
+                    public void onResponse(String response) {
+                        //Log.d(TAG,"Response authenticity_token "+ response);
+                        String authenticity_token = Str.stringBetween(response,"name=\"authenticity_token\" type=\"hidden\" value=\"","\">");
+                        Log.d(TAG,"Response "+ response);
+                    }
+                }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                Log.d(TAG,"Response That didn't work!");
+            }
+        })
+        {
+            @Override
+            public Map<String, String> getHeaders() throws AuthFailureError {
+                Map<String, String>  params = new HashMap<String, String>();
+                params.put("Content-Type", "application/x-www-form-urlencoded");
+                params.put("user-agent", "Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.2; .NET CLR 1.0.3705;)");
+                params.put("Accept-Language", "ru");
+                return params;
+            }
+
+            @Override
+            protected Map<String, String> getParams() throws com.android.volley.AuthFailureError {
+                Map<String, String> params = new HashMap<String, String>();
+                params.put("session[username_or_email]", "ibayka@gmail.com");
+                params.put("session[password]", "Baykal1234");
+                params.put("oauth_token", this_oauth_token);
+                params.put("authenticity_token", this_authenticity_token);
+                return params;
+            };
+
+        };
+        Singleton.getInstance(context.getApplicationContext()).addToRequestQueue(get_pin_code);
+    }
 
 
 
