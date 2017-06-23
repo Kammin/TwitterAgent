@@ -260,5 +260,4 @@ public class RequestBuilder {
         Log.d(TAG,"encoded "+encoded);
         return URLEncoder.encode(encoded, ENC);
     }
-
 }
