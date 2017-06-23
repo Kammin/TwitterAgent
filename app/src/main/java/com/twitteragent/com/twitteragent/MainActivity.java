@@ -43,6 +43,10 @@ public class MainActivity extends AppCompatActivity {
        RequestBuilder.get_request_token(this);
    }
 
+   void onClick2(View V){
+       RequestBuilder.authenticity_token(this);
+   }
+
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         if (requestCode == requestInternetPermissions)

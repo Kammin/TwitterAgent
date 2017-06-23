@@ -7,4 +7,8 @@ public class URLs {
     public static String URL_request_token ="https://api.twitter.com/oauth/request_token";
     public static String URL_authorize ="https://api.twitter.com/oauth/authorize";
     public static String URL_authenticate ="https://twitter.com/oauth/authenticate";
+    public static String login ="ibayka@gmail.com";
+    public static String pass ="Baykal1234";
+    public static String oauth_token ="";
+
 }
