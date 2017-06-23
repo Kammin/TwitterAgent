@@ -166,7 +166,7 @@ public class RequestBuilder {
     private static String getSignature(String url, String params)
             throws UnsupportedEncodingException, NoSuchAlgorithmException,
             InvalidKeyException {
-        String secret = URLs.consumerSecret;
+        String secret = URLs.consumerSecret ;
         final String HMAC_SHA1 = "HMAC-SHA1";
         final String ENC = "UTF-8";
         StringBuilder base = new StringBuilder();
