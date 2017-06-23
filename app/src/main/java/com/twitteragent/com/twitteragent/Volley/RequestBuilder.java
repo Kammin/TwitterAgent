@@ -147,22 +147,6 @@ public class RequestBuilder {
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     private static String getSignature(String url, String params)
             throws UnsupportedEncodingException, NoSuchAlgorithmException,
             InvalidKeyException {
